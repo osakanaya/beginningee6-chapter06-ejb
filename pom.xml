@@ -1,0 +1,236 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>org.beginningee6.book</groupId>
+	<artifactId>beginningee6-chapter06-ejb</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>beginningee6-chapter06-ejb</name>
+	<url>http://maven.apache.org</url>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- 
+				ShrinkWrap APIを利用したテスト対象クラスのパッケージングに
+				おいて、Mavenの依存関係を利用した依存JARファイルの取得を可能と
+				するAPIを追加する
+				
+				※必ずarqullian-bomよりも先に定義することに注意。
+			 -->
+			<dependency>
+				<groupId>org.jboss.shrinkwrap.resolver</groupId>
+				<artifactId>shrinkwrap-resolver-bom</artifactId>
+				<version>2.0.0-beta-3</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- 
+				Arquillian APIをインポートする
+			 -->
+			<dependency>
+				<groupId>org.jboss.arquillian</groupId>
+				<artifactId>arquillian-bom</artifactId>
+				<version>1.0.3.Final</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<!-- 
+		コンパイルされるソースコードのエンコーディング形式の前提として
+		UTF-8を設定する
+	 -->
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<!-- 
+				maven-compiler-plugin
+				
+				MavenでJavaソースコードのコンパイルを実行するために
+				必要なプラグイン。
+				
+				Java SE 1.6に準拠したソースコードとしてコンパイルし、
+				java SE 1.6のJava VMで動作する中間コードを生成する
+				ように設定する
+			 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<!-- 
+				maven-surefire-plugin
+				
+				Mavenのtestフェーズでユニットテストを実行するために
+				必要なプラグイン。
+				
+				Arquillianが正しく動作するために必要なバージョンを
+				ここで指定する。
+			 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.14</version>
+			</plugin>
+		</plugins>
+		<!-- 
+			Javaソースコード以外に設定ファイルなどをクラスパスに配置する
+			必要がある場合において、クラスパスに配置する設定ファイルを
+			持つMavenプロジェクト上のフォルダ名を指定する。
+			
+			testResourceタグで指定したフォルダのファイルは、Mavenのtest
+			フェーズを実行した場合にのみクラスパス上に配置される。
+			
+			ここでは、Arquillianを使ったEJBのインテグレーションテストで
+			必要になる以下の2つのファイルが含まれたフォルダの名前を指定
+			している。
+			（1）arquillian.xml：Arquillian設定ファイル
+			（2）jbossas-ds.xml：JBossでのデータソース定義ファイル
+			
+			※（2）は、このプロジェクトが依存するJPAライブラリ
+			　（beginningee6-chapter06-jpa）が必要とするJDBCデータソースを
+				定義するファイルである。
+				このデータソースは、本番環境用ではなく、開発環境用に用意した
+				データベースに接続する、テスト用のデータソースとして定義される
+				ことを意図している。
+		 -->
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+			</testResource>
+		</testResources>
+	</build>
+
+	<!-- 
+		作成したソースコードやテストコードをコンパイル、実行するために
+		必要となるライブラリを依存関係として設定する。
+	 -->
+	<dependencies>
+		<!--	================================================= 
+			1．JUnitによるユニットテストを行うためのライブラリ設定 
+				================================================= -->
+		<!-- 
+			JUnit
+			
+			テスト時にのみ必要なライブラリのため、scopeはtestとする
+		-->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- 	================================================= 
+			2．Arquillianによるインコンテナテストを行うためのライブラリ設定 
+				================================================= -->
+		<!-- 
+			Arquillian JUnit Integration
+			
+			JUnitの機能をArquillian用に拡張するためのライブラリ。
+			
+			テスト時にのみ必要なライブラリのため、scopeはtestとする。
+		 -->
+		<dependency>
+			<groupId>org.jboss.arquillian.junit</groupId>
+			<artifactId>arquillian-junit-container</artifactId>
+			<version>1.0.3.Final</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- 
+			Arqullian Container Adapter
+		
+			Arqullianによるインコンテナテストを特定のアプリケーションサーバ
+			上で実行可能にするためのライブラリ。
+			
+			テスト時にのみ必要なライブラリのため、scopeはtestとする。			
+		 -->
+		<dependency>
+			<groupId>org.jboss.as</groupId>
+			<artifactId>jboss-as-arquillian-container-managed</artifactId>
+			<version>7.1.1.Final</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- 
+			Arquillian Container Client
+		
+			別プロセスで動作するJBossサーバへ接続しアプリケーション
+			（ここではテスト対象コードやArqullianを使ったテストコード）
+			をデプロイするために必要となるクライアントライブラリ。
+
+			テスト時にのみ必要なライブラリのため、scopeはtestとする。
+		 -->
+		<dependency>
+			<groupId>org.jboss.arquillian.protocol</groupId>
+			<artifactId>arquillian-protocol-servlet</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- 
+			Shrinkwrap Resolver
+		
+			ShrinkWrap APIを利用したテスト対象クラスのパッケージングに
+			おいて、Mavenの依存関係を利用した依存JARファイルの取得を
+			可能とするライブラリ。
+
+			テスト時にのみ必要なライブラリのため、scopeはtestとする。
+		 -->
+		<dependency>
+			<groupId>org.jboss.shrinkwrap.resolver</groupId>
+			<artifactId>shrinkwrap-resolver-depchain</artifactId>
+			<version>2.0.0-beta-3</version>
+			<type>pom</type>
+			<scope>test</scope>
+		</dependency>
+		<!-- 	================================================= 
+			3．プログラムをコンパイルするためのライブラリ設定 
+				================================================= -->
+		<!-- 
+			JavaEE6のAPI
+			
+			@StatelessなどのEJBのアノテーションを含むテスト対象コードの
+			コンパイルにのみ必要であるが、
+			
+			テスト対象コードはJBossのAPサーバで動作させることを想定
+			しているが、この場合はAPサーバによってJavaEE6のAPIが提供
+			されるため、EARやWARとしてパッケージングされるアプリケー
+			ションにはこのJARファイルを含める必要はない。
+
+			従って、scopeはprovidedとする。
+		-->
+		<dependency>
+			<groupId>org.jboss.spec</groupId>
+			<artifactId>jboss-javaee-6.0</artifactId>
+			<version>1.0.0.Final</version>
+			<type>pom</type>
+			<scope>provided</scope>
+		</dependency>
+
+		<!--  
+			JPAによりデータアクセス層を実装したライブラリ。
+			
+			このプロジェクトで作成するEJBはこのJPAライブラリの
+			機能を使って実現されているため、依存関係の設定が必要である。
+			
+			また、本番環境では、このプロジェクトで作成するEJBライブラリ
+			とともにJPAライブラリのパッケージングも必要になるため、
+			scopeをcompileに設定する。
+			
+		-->
+		<dependency>
+			<groupId>org.beginningee6.book</groupId>
+			<artifactId>beginningee6-chapter06-jpa</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<type>jar</type>
+		</dependency>
+	</dependencies>
+</project>
